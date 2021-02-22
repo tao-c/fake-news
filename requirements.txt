@@ -1,5 +1,5 @@
 awscli==1.18.207
-dvc==1.11.9
+dvc==1.11.16
 editdistance==0.5.3
 fastapi==0.63.0
 gensim==3.8.3
@@ -24,3 +24,4 @@ uvloop==0.14.0
 vadersentiment==3.3.2
 watchgod==0.6
 websockets==8.1
+black==20.8b1

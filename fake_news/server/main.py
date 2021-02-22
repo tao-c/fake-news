@@ -12,7 +12,7 @@ from fake_news.utils.features import construct_datapoint
 
 logging.basicConfig(
     format="%(levelname)s - %(asctime)s - %(filename)s - %(message)s",
-    level=logging.DEBUG
+    level=logging.DEBUG,
 )
 LOGGER = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ app.add_middleware(
 # Load model
 config = {
     "model_output_path": settings.model_dir,
-    "featurizer_output_path": settings.model_dir
+    "featurizer_output_path": settings.model_dir,
 }
 model = RandomForestModel(config)
 

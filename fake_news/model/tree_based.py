@@ -18,7 +18,7 @@ from fake_news.utils.features import TreeFeaturizer
 
 logging.basicConfig(
     format="%(levelname)s - %(asctime)s - %(filename)s - %(message)s",
-    level=logging.DEBUG
+    level=logging.DEBUG,
 )
 LOGGER = logging.getLogger(__name__)
 
@@ -27,10 +27,14 @@ class RandomForestModel(Model):
     def __init__(self, config: Optional[Dict] = None):
         self.config = config
         model_cache_path = os.path.join(config["model_output_path"], "model.pkl")
-        self.featurizer = TreeFeaturizer(os.path.join(config["featurizer_output_path"],
-                                                      "featurizer.pkl"),
-                                         config)
-        if "evaluate" in config and config["evaluate"] and not os.path.exists(model_cache_path):
+        self.featurizer = TreeFeaturizer(
+            os.path.join(config["featurizer_output_path"], "featurizer.pkl"), config
+        )
+        if (
+            "evaluate" in config
+            and config["evaluate"]
+            and not os.path.exists(model_cache_path)
+        ):
             raise ValueError("Model output path does not exist but in `evaluate` mode!")
         if model_cache_path and os.path.exists(model_cache_path):
             LOGGER.info("Loading model from cache...")
@@ -39,25 +43,32 @@ class RandomForestModel(Model):
         else:
             LOGGER.info("Initializing model from scratch...")
             self.model = RandomForestClassifier(**self.config["params"])
-    
-    def train(self,
-              train_datapoints: List[Datapoint],
-              val_datapoints: List[Datapoint] = None,
-              cache_featurizer: Optional[bool] = False) -> None:
+
+    def train(
+        self,
+        train_datapoints: List[Datapoint],
+        val_datapoints: List[Datapoint] = None,
+        cache_featurizer: Optional[bool] = False,
+    ) -> None:
         self.featurizer.fit(train_datapoints)
         if cache_featurizer:
             feature_names = self.featurizer.get_all_feature_names()
-            with open(os.path.join(self.config["model_output_path"],
-                                   "feature_names.pkl"), "wb") as f:
+            with open(
+                os.path.join(self.config["model_output_path"], "feature_names.pkl"),
+                "wb",
+            ) as f:
                 pickle.dump(feature_names, f)
-            self.featurizer.save(os.path.join(self.config["featurizer_output_path"],
-                                              "featurizer.pkl"))
+            self.featurizer.save(
+                os.path.join(self.config["featurizer_output_path"], "featurizer.pkl")
+            )
         train_labels = [datapoint.label for datapoint in train_datapoints]
         LOGGER.info("Featurizing data from scratch...")
         train_features = self.featurizer.featurize(train_datapoints)
         self.model.fit(train_features, train_labels)
-    
-    def compute_metrics(self, eval_datapoints: List[Datapoint], split: Optional[str] = None) -> Dict:
+
+    def compute_metrics(
+        self, eval_datapoints: List[Datapoint], split: Optional[str] = None
+    ) -> Dict:
         expected_labels = [datapoint.label for datapoint in eval_datapoints]
         predicted_proba = self.predict(eval_datapoints)
         predicted_labels = np.argmax(predicted_proba, axis=1)
@@ -76,14 +87,14 @@ class RandomForestModel(Model):
             f"{split_prefix} false positive": fp,
             f"{split_prefix} true positive": tp,
         }
-    
+
     def predict(self, datapoints: List[Datapoint]) -> np.array:
         features = self.featurizer.featurize(datapoints)
         return self.model.predict_proba(features)
-    
+
     def get_params(self) -> Dict:
         return self.model.get_params()
-    
+
     def save(self, model_cache_path: str) -> None:
         LOGGER.info("Saving model to disk...")
         # TODO (mihail): Save using joblib
